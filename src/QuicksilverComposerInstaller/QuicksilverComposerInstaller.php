@@ -13,6 +13,7 @@ class QuicksilverComposerInstaller extends LibraryInstaller
    */
   public function supports($packageType)
   {
+  	var_dump("PACKAGE TYPE: " . $packageType);
     return 'quicksilver-module' === $packageType;
   }
 
