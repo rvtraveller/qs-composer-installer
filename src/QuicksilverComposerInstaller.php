@@ -8,19 +8,94 @@ use Composer\Installer\LibraryInstaller;
 class QuicksilverComposerInstaller extends LibraryInstaller
 {
 
+  
   /**
-   * {@inheritDoc}
+   * Replace vars in a path
+   *
+   * @param  string $path
+   * @param  array  $vars
+   * @return string
    */
-  public function getInstallPath(PackageInterface $package) {
-    return 'private/quicksilver/' . $package->getPrettyName();
+  protected function templatePath($path, array $vars = array())
+  {
+    if (strpos($path, '{') !== false) {
+      extract($vars);
+      preg_match_all('@\{\$([A-Za-z0-9_]*)\}@i', $path, $matches);
+      if (!empty($matches[1])) {
+        foreach ($matches[1] as $var) {
+          $path = str_replace('{$' . $var . '}', $$var, $path);
+        }
+      }
+    }
+
+    return $path;
   }
+
+  /**
+   * Search through a passed paths array for a custom install path.
+   *
+   * @param  array  $paths
+   * @param  string $name
+   * @param  string $type
+   * @param  string $vendor = NULL
+   * @return string
+   */
+  protected function mapCustomInstallPaths(array $paths, $name, $type, $vendor = NULL)
+  {
+    foreach ($paths as $path => $names) {
+      if (in_array($name, $names) || in_array('type:' . $type, $names) || in_array('vendor:' . $vendor, $names)) {
+        return $path;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Return the install path based on package type.
+   *
+   * @param  PackageInterface $package
+   * @param  string           $frameworkType
+   * @return string
+   */
+  public function getInstallPath(PackageInterface $package, $frameworkType = '')
+  {
+    $type = $package->getType();
+
+    $prettyName = $package->getPrettyName();
+    if (strpos($prettyName, '/') !== false) {
+      list($vendor, $name) = explode('/', $prettyName);
+    } else {
+      $vendor = '';
+      $name = $prettyName;
+    }
+
+    $availableVars = compact('name', 'vendor', 'type');
+
+    $extra = $package->getExtra();
+    if (!empty($extra['installer-name'])) {
+      $availableVars['name'] = $extra['installer-name'];
+    }
+
+    if ($this->composer->getPackage()) {
+      $extra = $this->composer->getPackage()->getExtra();
+      if (!empty($extra['installer-paths'])) {
+        $customPath = $this->mapCustomInstallPaths($extra['installer-paths'], $prettyName, $type, $vendor);
+        if ($customPath !== false) {
+          return $this->templatePath($customPath, $availableVars);
+        }
+      }
+    }
+
+    return $this->templatePath($locations[$packageType], $availableVars);
+  }
+
 
   /**
    * {@inheritDoc}
    */
   public function supports($packageType)
   {
-  	var_dump("PACKAGE TYPE: " . $packageType);
     return 'quicksilver-module' === $packageType;
   }
 
