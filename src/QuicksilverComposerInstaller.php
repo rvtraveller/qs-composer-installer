@@ -8,7 +8,7 @@ use Composer\Installer\LibraryInstaller;
 class QuicksilverComposerInstaller extends LibraryInstaller
 {
 
-  
+
   /**
    * Replace vars in a path
    *
@@ -60,7 +60,7 @@ class QuicksilverComposerInstaller extends LibraryInstaller
    */
   public function getInstallPath(PackageInterface $package, $frameworkType = '')
   {
-    $type = $package->getType();
+    $packageType = $package->getType();
 
     $prettyName = $package->getPrettyName();
     if (strpos($prettyName, '/') !== false) {
@@ -70,7 +70,11 @@ class QuicksilverComposerInstaller extends LibraryInstaller
       $name = $prettyName;
     }
 
-    $availableVars = compact('name', 'vendor', 'type');
+    $availableVars = [
+      'name' => $name,
+      'vendor' => $vendor,
+      'type' => $packageType
+    ];
 
     $extra = $package->getExtra();
     if (!empty($extra['installer-name'])) {
@@ -80,12 +84,17 @@ class QuicksilverComposerInstaller extends LibraryInstaller
     if ($this->composer->getPackage()) {
       $extra = $this->composer->getPackage()->getExtra();
       if (!empty($extra['installer-paths'])) {
-        $customPath = $this->mapCustomInstallPaths($extra['installer-paths'], $prettyName, $type, $vendor);
+        $customPath = $this->mapCustomInstallPaths($extra['installer-paths'], $prettyName, $packageType, $vendor);
         if ($customPath !== false) {
           return $this->templatePath($customPath, $availableVars);
         }
       }
     }
+
+    $locations = [
+      'quicksilver-script' => 'web/private/scripts/quicksilver/{$name}/',
+      'quicksilver-module' => 'web/private/scripts/quicksilver/{$name}/',
+    ];
 
     return $this->templatePath($locations[$packageType], $availableVars);
   }
@@ -96,7 +105,7 @@ class QuicksilverComposerInstaller extends LibraryInstaller
    */
   public function supports($packageType)
   {
-    return 'quicksilver-module' === $packageType;
+    return in_array($packageType, ['quicksilver-script', 'quicksilver-module']);
   }
 
 }
