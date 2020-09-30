@@ -13,10 +13,10 @@
     "class": "rvtraveller\\QuicksilverComposerInstaller\\QuicksilverComposerInstallerPlugin"
   },
   "require": {
-    "composer-plugin-api": "~1.0",
-    "composer/installers": "~1.0"
+    "composer-plugin-api": "^1.0 || ^2.0",
+    "composer/installers": "^1.9"
   },
   "require-dev": {
-    "composer/composer": "~1.0@dev"
+    "composer/composer": "1.0.* || 2.0.*@dev"
   }
 }
